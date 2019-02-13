@@ -30,44 +30,22 @@ with open("proj1_data.json") as fp:
 
 # ----------------------------------------------------------------------------#
 # Splitting the first 10,000 points for training set.
-
-
-training_set = data[
-               0:10000]  # training set is a list of dictionary, which contains the partition (index 0 - 9999) datapoints of our given data
-# print(len(training_set)) 10,000
-#for info_name, info_value in training_set[2].items():
-    #print (info_name + " : " + str(info_value))
-#print("#---------------------------------------------------------------------------#")
+training_set = data[0:10000]  # training set is a list of dictionary, which contains the partition (index 0 - 9999) datapoints of our given data
 
 # Splitting the next 1,000 data points for validation set
-
-validation_set = data[
-                 10000:11000]  # validation set is a list of dictionary, which contains the partition (index 10000 - 10999) datapoints of our given data
-# print(len(validation_set)) 1,000
-#for info_name, info_value in validation_set[2].items():
-    #print (info_name + " : " + str(info_value))
-#print("#---------------------------------------------------------------------------#")
+validation_set = data[10000:11000]  # validation set is a list of dictionary, which contains the partition (index 10000 - 10999) datapoints of our given data
 
 # Splitting the last 1,000 for test set
-
-test_set = data[
-           11000:12000]  # test set is a list of dictionary, which contains the partition (index 11000 - 11999) datapoints of our given data
-# print(len(test_set))      1,000
-#for info_name, info_value in test_set[999].items():
-    #print(info_name + " : " + str(info_value))
-#print("#---------------------------------------------------------------------------#")
+test_set = data[11000:12000]            # test set is a list of dictionary, which contains the partition (index 11000 - 11999) datapoints of our given data
 
 # ---------------------------------------------------------------------------#
 # Encoding The features children, is root, and controversality
-
-# print (training_set[0].get("is_root")) (testing)
 # To encode our training set
 for index in range(10000):
     if training_set[index].get("is_root") == True:  # If a comment is a root, we set the is_root variable to 1.
         training_set[index]["is_root"] = 1
     else:
         training_set[index]["is_root"] = 0
-# print (training_set[0].get("is_root")) (testing)
 
 # Encode validation set
 for index in range(1000):
@@ -83,19 +61,14 @@ for index in range(1000):
     else:
         test_set[index]["is_root"] = 0
 
-
 # ---------------------------------------------------------------------------#
 # Pre-process the text message
 
-def lowerCaseAndSplit(text):  # A simple function that takes in a text then lower-casing and splitting the text on whitespcae token. It returns a list of strings.
-    wordList = (text.lower()).split()  # Storing our result into words
+def lowerCaseAndSplit(text):                # A simple function that takes in a text then lower-casing and splitting the text on whitespcae token. It returns a list of strings.
+    wordList = (text.lower()).split()       # Storing our result into words
     return wordList
 
-
-# print(lowerCaseAndSplit(text)) #(testing)
-
-def splitIntoComponents(text):
-    #A function that takes in a comment and split into components separated by comma, period, etc. not including whitespace
+def splitIntoComponents(text):              #A function that takes in a comment and split into components separated by comma, period, etc. not including whitespace
     while 1:
         try:
             last = text[-1]
@@ -109,8 +82,6 @@ def splitIntoComponents(text):
     text = text.replace(";", ",").replace(".", ",").replace("!", ",").replace("?", ",").replace(":", ",")
     components = text.split(",")
     return components
-
-# print(splitIntoComponents(text))
 
 def splitNoRepitition(text):
     text = text.replace(";", "").replace(".", "").replace("!", "").replace("?", "").replace(",", "").replace(":", "").replace("(", "").replace(")", "")
@@ -130,55 +101,48 @@ def countWordPerComment (dataSet):                  # A function that takes in a
 
 dictionaryWords = countWordPerComment(test_set)     # (A dictionary of words) Input to test our frequencyWordCount method
 
-# A method that takes in a word dictionary and count how many comments have n word (n: 1,2,..., maximumWordsInDataSet) and output a dictionary
+                                                    # A method that takes in a word dictionary and count how many comments have n word (n: 1,2,..., maximumWordsInDataSet) and output a dictionary
 def frequencyWordCount (dictionaryWords):
     frequencyDict = {}
-    wordListTuple = sorted(dictionaryOfWords.items(), key=lambda x: x[1], reverse=False)  # Sort our dictionary by value and store it into a list of tuples in ascending order
-    maxNumWords = wordListTuple[len(wordListTuple)-1][1]       # We need the maximum number of words among the comments in the input data set for our loop
-    # print(maxNumWords)
-    # print(wordListTuple)
-    for i in range(maxNumWords+1):       # Since range (1, maxNumWords (exclusive)), we need to add 1
+    wordListTuple = sorted(dictionaryOfWords.items(), key=lambda x: x[1], reverse=False)    # Sort our dictionary by value and store it into a list of tuples in ascending order
+    maxNumWords = wordListTuple[len(wordListTuple)-1][1]                                    # We need the maximum number of words among the comments in the input data set for our loop
+    
+    for i in range(maxNumWords+1):                                                          # Since range (1, maxNumWords (exclusive)), we need to add 1
         frequencyDict["Number of comments with " + str(i) + " words: "] = 0
-#   print(frequencyDict)
-
     numWords = 0
-    while  numWords <= maxNumWords:                             # While loop to check whether our comment has the same word as our index
-        for i in range(len(wordListTuple)):                     # For loop for looping through each comment
+    while  numWords <= maxNumWords:                                                         # While loop to check whether our comment has the same word as our index
+        for i in range(len(wordListTuple)):                                                 # For loop for looping through each comment
             if (wordListTuple[i][1] == numWords):
                 frequencyDict["Number of comments with " + str(numWords) + " words: "] += 1
         numWords += 1
-#   print(frequencyDict)
     return frequencyDict
-#print(frequencyWordCount(dictionaryOfWords))
-
 # ---------------------------------------------------------------------------#
-def genMatrix(dataSet):  # A generic function that takes in a list of dictionaries then outputs a matrix X (each row is a sample and each column represents a feature) and a vector Y (target values)
 
-    wordFreqDict = {}  # A dictionary to store the frequency of every word from all comments
-    for example in range(len(dataSet)):  # Loop through each comment
-        for w in lowerCaseAndSplit(dataSet[example].get("text")):  # Loop through each word of each comment
-            if w in wordFreqDict:  # If case: The word is already in our word frequency dictionary, so we just increment its frequency by 1
+def genMatrix(dataSet):                                                     # A generic function that takes in a list of dictionaries then outputs a matrix X (each row is a sample and each column represents a feature) and a vector Y (target values)
+    wordFreqDict = {}                                                       # A dictionary to store the frequency of every word from all comments
+    for example in range(len(dataSet)):                                     # Loop through each comment
+        for w in lowerCaseAndSplit(dataSet[example].get("text")):           # Loop through each word of each comment
+            if w in wordFreqDict:                                           # If case: The word is already in our word frequency dictionary, so we just increment its frequency by 1
                 wordFreqDict[w] += 1
-            else:  # Else case: We have encountered a new word, therefore we just simply add the word into our dictionary and set its value to 1
+            else:                                                           # Else case: We have encountered a new word, therefore we just simply add the word into our dictionary and set its value to 1
                 wordFreqDict[w] = 1
 
-    wordListTuple = sorted(wordFreqDict.items(), key=lambda x: x[1],reverse=True)  # Sort our dictionary by value and store it into a list of tuples
-    wordListTuple = wordListTuple[0:160]  # We only need the top 160 values(frequencies) from our list
-#    print(wordListTuple)
+    wordListTuple = sorted(wordFreqDict.items(), key=lambda x: x[1],reverse=True)   # Sort our dictionary by value and store it into a list of tuples
+    wordListTuple = wordListTuple[0:160]                                            # We only need the top 160 values(frequencies) from our list
 
-    numRow = (len(dataSet))  # Number of rows of the output matrix X depends on how many examples we have.
-    numCol = (len(dataSet[0]) + len(wordListTuple) - 1 + 4)  # Number of columns depends on number of features (164): is_root, controversiality, children, bias, w0_freq, w1_freq,...,w160_freq
-    matrix_X = np.zeros((numRow, numCol))  # A matrix with all zeros as its entries.
-    vector_Y = np.zeros((numRow, 1))  # Initialize a vector Y with size numRow
+    numRow = (len(dataSet))                                                         # Number of rows of the output matrix X depends on how many examples we have.
+    numCol = (len(dataSet[0]) + len(wordListTuple) - 1 + 4)                         # Number of columns depends on number of features (164): is_root, controversiality, children, bias, w0_freq, w1_freq,...,w160_freq
+    matrix_X = np.zeros((numRow, numCol))                                           # A matrix with all zeros as its entries.
+    vector_Y = np.zeros((numRow, 1))                                                # Initialize a vector Y with size numRow
     dictionaryOfWords = countWordPerComment(dataSet)
-    for example in range(numRow):  # Loop through each example in the data set
-        matrix_X[example][0] = dataSet[example].get("is_root")  # First index of each row (example) is the binary is_root
-        matrix_X[example][1] = dataSet[example].get("controversiality")  # Second index of each row is the controversiality
-        matrix_X[example][2] = dataSet[example].get("children")  # Third index of each row is the number of children (replies) the comment received
+    for example in range(numRow):                                           # Loop through each example in the data set
+        matrix_X[example][0] = dataSet[example].get("is_root")              # First index of each row (example) is the binary is_root
+        matrix_X[example][1] = dataSet[example].get("controversiality")     # Second index of each row is the controversiality
+        matrix_X[example][2] = dataSet[example].get("children")             # Third index of each row is the number of children (replies) the comment received
         matrix_X[example][3] = 1  # Bias term
 
         # Our new features
-
+        
         # New features 1 - Controversiality squared
         controversiality_squared = matrix_X[example][1]
         matrix_X[example][4] = np.square(controversiality_squared) + 0.001
